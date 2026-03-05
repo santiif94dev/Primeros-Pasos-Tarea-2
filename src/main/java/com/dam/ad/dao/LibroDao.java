@@ -30,7 +30,7 @@ public class LibroDao {
         }
     }
 
-    public Optional<Libro> findById(int id) {
+    public Optional <Libro> findById(int id) {
         String sql = "SELECT id, titulo, isbn, anio, disponible FROM libro WHERE id = ?";
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -46,7 +46,28 @@ public class LibroDao {
                     id, e);
         }
     }
+    public List<Libro> searchByTitulo(String texto) {
+        if (texto==null||texto.isBlank()){
+            return List.of();
+        }
+        String sql = "SELECT id, titulo, isbn, anio, disponible FROM libro WHERE LOWER (titulo) LIKE ? ORDER BY id";
+        String patron = "%" + texto.toLowerCase() + "%";
 
+        try (Connection con = Db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)){
+             ps.setString(1,patron);
+
+             try (ResultSet rs = ps.executeQuery()) {
+                 List<Libro> resultados = new ArrayList<>();
+                 while (rs.next()) {
+                     resultados.add(mapRow(rs));
+                 }
+                 return resultados;
+             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error buscando libros", e);
+        }
+    }
     public int insert(Libro libro) {
         String sql = "INSERT INTO libro (titulo, isbn, anio, disponible) VALUES (?,?,?,?)";
         try (Connection con = Db.getConnection();
